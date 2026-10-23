@@ -1,0 +1,6 @@
+# fichiers g?n?r?s automatiquement par Python
+__pycache__/
+*.pyc
+
+# les donn?es : on ne les envoie pas sur GitHub
+data/
