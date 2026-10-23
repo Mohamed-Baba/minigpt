@@ -3,6 +3,8 @@
 
 
 import torch
+import csv
+import os
 from dataset import CharTokenizer, TextDataset
 from model import BigramLM
 
@@ -38,7 +40,13 @@ def estimate_loss(loader, n_batches=200):
 
 
 # ---------- avant l'entraînement ----------
-print(f"init       : train {estimate_loss(train_loader):.4f} | valid {estimate_loss(valid_loader):.4f}")
+estimate_history = []
+step_history = []
+N_BATCHES = 200
+train_loss,valid_loss = estimate_loss(train_loader, n_batches = N_BATCHES) , estimate_loss(valid_loader, n_batches = N_BATCHES)
+estimate_history.append({"step":0 , "train":train_loss , "valid":valid_loss})
+
+print(f"init       : train {train_loss:.4f} | valid {valid_loss:.4f}")
 context = torch.zeros((1, 1), dtype=torch.long)          # '\n'
 print("Texte AVANT :", tok.decode(model.generate(context, 200)[0].tolist()), "\n")
 
@@ -47,7 +55,7 @@ max_steps, eval_every = 5000, 500
 step = 0
 while step < max_steps:
     for x, y in train_loader:
-        # À TOI : les 4 lignes de ton TP
+
         # 1. remettre les gradients à zéro
         optimizer.zero_grad()
         # 2. forward : logits, loss = ...
@@ -57,11 +65,28 @@ while step < max_steps:
         # 4. mise à jour des paramètres
         optimizer.step()
 
+        # Enregistrer la loss :
+        step_history.append({"step" : step + 1 , "loss": loss.item()})
         step += 1
         if step % eval_every == 0:
-            print(f"step {step:5d} : train {estimate_loss(train_loader):.4f} | valid {estimate_loss(valid_loader):.4f}")
+            train_loss,valid_loss = estimate_loss(train_loader, n_batches = N_BATCHES) , estimate_loss(valid_loader, n_batches = N_BATCHES)
+            estimate_history.append({"step": step , "train":train_loss , "valid":valid_loss})    
+            print(f"step {step:5d} : train {train_loss:.4f} | valid {valid_loss:.4f}")
         if step == max_steps:
             break
 
 # ---------- après l'entraînement ----------
+run_name = "bigram"   # On met ça pour généraliser notre fichier
+os.makedirs("results", exist_ok=True)   # On crée le dossier results s'il n'existe pas
+
+with open(f"results/{run_name}_eval.csv", "w", newline="") as f:
+    writer = csv.DictWriter(f, fieldnames=["step", "train", "valid"])  # On va convertir notre dictionnaire de clées données en csv
+    writer.writeheader()
+    writer.writerows(estimate_history)
+
+with open(f"results/{run_name}_steps.csv", "w", newline = "") as f:
+    writer = csv.DictWriter(f, fieldnames = ["step" , "loss"])
+    writer.writeheader()
+    writer.writerows(step_history)
+
 print("\nTexte APRÈS :", tok.decode(model.generate(context, 500)[0].tolist()))

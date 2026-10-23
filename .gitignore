@@ -1,6 +1,18 @@
-# fichiers g?n?r?s automatiquement par Python
+# Python
 __pycache__/
 *.pyc
+.ipynb_checkpoints/
 
-# les donn?es : on ne les envoie pas sur GitHub
+# Donnees : trop lourdes, on les retelecharge
 data/
+
+# Modeles entraines : trop lourds
+checkpoints/
+*.pt
+
+# Editeur et outils
+.vscode/
+wandb/
+
+# Secrets : cles d'API, mots de passe
+.env
