@@ -16,3 +16,4 @@ wandb/
 
 # Secrets : cles d'API, mots de passe
 .env
+.gradio/
